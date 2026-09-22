@@ -1,28 +1,29 @@
 // ============================================================
-// Firebase Realtime Database Security Rules
+// Firebase Realtime Database Security Rules v2
 // โปรเจค: Werewolf Online v2.1
-// ออกแบบตาม Data Schema ข้อ 8 ของแผนโปรเจค
-// (ข้อ 9 ของแผนอ้างถึงบทสนทนาในแชท — เขียนใหม่ครอบคลุมทุก node)
+// ออกแบบตาม Data Schema ข้อ 8 ของแผนโปรเจค + บันทึกการค้นพบ:
 //
-// หลักการเข้าถึง (ยืนยันโดยเจ้าของโปรเจค):
-//  ให้ = .read แปลว่า "อ่าน"  .write แปลว่า "เขียน"
-//  - players        : อ่านทุกคน / เขียนเจ้าตัว + host
-//  - secret/roles   : อ่านเจ้าตัว + host / เขียน host เท่านั้น
-//  - secret/cursed  : อ่าน Cursed + host + หมาป่า (หลังคืนถัดไป) / เขียน host
-//  - wolf           : อ่าน-เขียนหมาป่า + host (ข้อมูลแกน เช่น victims จำกัด host)
-//  - night          : อ่าน host / เขียนเจ้าตัว
-//  - hunter, lovers : อ่านทุกคน / เขียน host
-//  - spectator      : อ่าน host + ผู้เล่นที่ตาย / เขียน host
+// ⚠️ RTDB ใช้หลัก "grant ถ้ามี rule ใดระดับหนึ่งยอม" (shallower grants
+//    cascade ลงมาทุก descendant และ rule ลึกกว่ารีบวอกไม่ได้)
+//    -> ห้ามตี ".read" เปิดที่ node ครอบ (rooms/$code) เพราะจะรั่วทุกอย่าง
+//    -> จากเดิม $code.read:true ทำให้ secret/wolf/night เปิดอ่านได้หมด — แก้แล้ว
+//
+// หลักการเข้าถึง (ยืนยันโดยเจ้าของโปรเจค §9):
+//  - meta, players, hunter, lovers  : อ่านทุกคน
+//  - secret/roles                   : อ่านเจ้าตัว + host (+ทุกคนเมื่อเฟส end)
+//  - secret/cursed                  : อ่านตัว Cursed + host + หมาป่า (หลังคืนถัดไป)
+//  - wolf/*                         : อ่าน หมาป่า + host
+//  - night/actions                  : อ่านเจ้าตัว + host
+//  - spectator                      : อ่าน host + ผู้เล่นที่ตายแล้ว
+//  - เขียน: host ควบคุม meta/roles/cursed/wolf/*/night(อ่าน)/hunter/lovers/spectator
+//    ผู้เล่นเขียนได้เฉพาะ players/$uid (ตัวเอง) + night/actions/$uid (ตัวเอง)
 // ============================================================
 {
   "rules": {
     "rooms": {
       "$code": {
-        // อ่านห้อง: ทุกคน (เข้าดูล็อบบี้/สเปคได้)
-        ".read": true,
-
-        // เขียนห้อง: สร้างห้องใหม่ได้ทุกคนที่ login /
-        //            แก้ไขห้องเดิมได้เฉพาะ host (hostUid หรือ hostUid2)
+        // ---- เขียนระดับห้อง: สร้างห้องใหม่ (ทุกคนที่ login) / host แก้ไข-ลบห้อง ----
+        // (ห้ามใส่ ".read" ระดับนี้เด็ดขาด — จะทำให้ secret/wolf รั่วหมด)
         ".write": "auth != null && (
                       !data.exists()
                       || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
@@ -31,9 +32,7 @@
 
         // ---- meta: ข้อมูลห้อง (phase, day, settings, winner) ----
         "meta": {
-          // อ่าน: ทุกคน
           ".read": true,
-          // เขียน: host เท่านั้น; แต่สร้างห้องใหม่ได้ (ยังไม่มี meta อยู่)
           ".write": "auth != null && (
                         !root.child('rooms/' + $code + '/meta').exists()
                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
@@ -41,12 +40,10 @@
                      )"
         },
 
-        // ---- players: รายชื่อผู้เล่นยืนยันตัวจริง ----
+        // ---- players: รายชื่อผู้เล่น (ชื่อ/มีชีวิต/โหวต — เปิดเผยได้) ----
         "players": {
+          ".read": true,
           "$uid": {
-            // อ่าน: ทุกคน (ชื่อ/สถานะมีชีวิตเปิดเผยได้)
-            ".read": true,
-            // เขียน: เจ้าตัว (ตั้งชื่อ/โหวต/avatar) + host
             ".write": "auth != null && (
                           $uid == auth.uid
                           || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
@@ -55,33 +52,27 @@
           }
         },
 
-        // ---- secret: โซนบทบาทลับ (ห้ามรั่วเด็ดขาด) ----
+        // ---- secret: โซนบทบาทลับ (ไม่มี ".read" ที่ตัวนี้/ที่ rooms — ค่า default deny) ----
         "secret": {
-          // บล็อกการ list ทั้งโซน secret
-          ".read": false,
           ".write": false,
-
           "roles": {
             "$uid": {
-              // อ่าน: เจ้าตัว + host เท่านั้น (DevTools ของคนอื่นไม่มีทางเห็น)
+              // อ่าน: เจ้าตัว + host + ทุกคนเมื่อเกมจบ (เฟส end — เฉลยบทบาท)
               ".read": "auth != null && (
                            $uid == auth.uid
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                           || root.child('rooms/' + $code + '/meta/phase').val() == 'end'
                         )",
-              // เขียน: host เท่านั้น (แจกบทบาทตอนเริ่มเกม)
               ".write": "auth != null && (
                             auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                             || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                          )"
             }
           },
-
           "cursed": {
             "$uid": {
-              // อ่าน: เจ้าตัว (ตัว Cursed เอง) + host +
-              //       หมาป่า หลังคืนถัดไปจากคืนที่ถูกกัด (turnedNight + 1)
-              //       ใช้ /meta/day เทียบกับ turnedNight เพื่อป้องกันการรู้ก่อนเวลา
+              // อ่าน: เจ้าตัว + host + หมาป่า แต่ต้องถึงคืนถัดไปจากคืนที่ถูกกัด
               ".read": "auth != null && (
                            $uid == auth.uid
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
@@ -92,7 +83,6 @@
                               && root.child('rooms/' + $code + '/meta/day').val() >= data.child('turnedNight').val() + 1
                            )
                         )",
-              // เขียน: host เท่านั้น (คนทรง mark ถูกกัด / กลายเป็นหมาป่า)
               ".write": "auth != null && (
                             auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                             || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
@@ -101,16 +91,14 @@
           }
         },
 
-        // ---- wolf: โซนหมาป่า (members, votes, victims, knowsCursed) ----
+        // ---- wolf: โซนหมาป่า (read: หมาป่า + host เท่านั้น) ----
         "wolf": {
           "members": {
-            // อ่าน: หมาป่า + host เท่านั้น (รู้จักกันในฝ่าย)
             ".read": "auth != null && (
                          root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                       )",
-            // เขียน: host เท่านั้น (กำหนดสมาชิกตอนเริ่มเกม)
             ".write": "auth != null && (
                           auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                           || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
@@ -118,13 +106,11 @@
           },
           "votes": {
             "$wolfUid": {
-              // อ่าน: หมาป่า + host (เห็นโหวตของกันและกันแบบเรียลไทม์)
               ".read": "auth != null && (
                            root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                         )",
-              // เขียน: หมาป่าโหวตได้แค่ slot ของตัวเอง + host
               ".write": "auth != null && (
                             $wolfUid == auth.uid
                             || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
@@ -133,26 +119,55 @@
             }
           },
           "victims": {
-            // อ่าน: หมาป่า + host เท่านั้น
             ".read": "auth != null && (
                          root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                       )",
-            // เขียน: host เท่านั้น (สรุปเหยื่อจากโหวตหมาป่า — ผู้เล่นปลอมไม่ได้)
             ".write": "auth != null && (
                           auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                           || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                        )"
           },
           "knowsCursed": {
-            // อ่าน: หมาป่า + host
             ".read": "auth != null && (
                          root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                       )",
-            // เขียน: host เท่านั้น
+            ".write": "auth != null && (
+                          auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
+                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                       )"
+          },
+          "lastBodyguardTarget": {
+            ".read": "auth != null && (
+                         root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
+                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
+                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                      )",
+            ".write": "auth != null && (
+                          auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
+                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                       )"
+          },
+          "doubleKill": {
+            ".read": "auth != null && (
+                         root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
+                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
+                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                      )",
+            ".write": "auth != null && (
+                          auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
+                          || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                       )"
+          },
+          "sickNext": {
+            ".read": "auth != null && (
+                         root.child('rooms/' + $code + '/secret/roles/' + auth.uid + '/team').val() == 'wolf'
+                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
+                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
+                      )",
             ".write": "auth != null && (
                           auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                           || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
@@ -162,37 +177,32 @@
 
         // ---- night: action กลางคืนของแต่ละบทบาท ----
         "night": {
-          // อ่าน: host เท่านั้น (คนทรงเห็นทุก action)
           ".read": "auth != null && (
                        auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                        || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                     )",
           "actions": {
             "$uid": {
-              // อ่าน: เจ้าตัว + host (เจ้าตัวดู action ของตัวเองได้)
               ".read": "auth != null && (
                            $uid == auth.uid
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                            || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                         )",
-              // เขียน: เจ้าตัวเท่านั้น (ใครก็ไปเขียนให้คนอื่นไม่ได้)
               ".write": "auth != null && $uid == auth.uid"
             }
           }
         },
 
-        // ---- hunter: การยิงของนายพราน ----
+        // ---- hunter: การยิงของนายพราน (เปิดเผยแบบสาธารณะ) ----
         "hunter": {
-          // อ่าน: ทุกคน เมื่อถูกเปิดเผยแล้ว (revealed = true)
           ".read": true,
-          // เขียน: host เท่านั้น (คนทรงควบคุม reveal + ยิง)
           ".write": "auth != null && (
                         auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                      )"
         },
 
-        // ---- lovers: คู่รัก (เปิดเผยเมื่อจบเกม / สเปคตากระต่าย) ----
+        // ---- lovers: คู่รัก (เปิดเผยเมื่อจบเกม) ----
         "lovers": {
           ".read": true,
           ".write": "auth != null && (
@@ -201,15 +211,13 @@
                      )"
         },
 
-        // ---- spectator: มุมมองของผู้ชม ----
+        // ---- spectator: มุมมองผู้ชม (host + ผู้เล่นที่ตาย) ----
         "spectator": {
-          // อ่าน: host + ผู้เล่นที่ตายแล้ว (alive = false) เท่านั้น
           ".read": "auth != null && (
                        auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                        || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()
                        || root.child('rooms/' + $code + '/players/' + auth.uid + '/alive').val() == false
                     )",
-          // เขียน: host เท่านั้น
           ".write": "auth != null && (
                         auth.uid == root.child('rooms/' + $code + '/meta/hostUid').val()
                         || auth.uid == root.child('rooms/' + $code + '/meta/hostUid2').val()

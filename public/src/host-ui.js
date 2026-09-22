@@ -502,8 +502,74 @@ function init() {
     myUid = user.uid;
     console.log("uid:", myUid);
 
-    onValue(ref(db, `rooms/${roomCode}`), (snap) => {
-      room = snap.val();
+    // อ่านแบบแยก node (Security Rules: ห้าม read ทั้งห้อง — ไม่งั้น secret รั่ว)
+    room = { meta: null, players: {}, night: {}, wolf: {}, secret: {}, lovers: {} };
+    let hostSensitiveBound = false;
+    const bindHostSensitive = () => {
+      if (hostSensitiveBound) return;
+      hostSensitiveBound = true;
+
+      // wolf: อ่านทีละโซนย่อย (rules กำหนด read แบบแยก node; ไม่อ่าน wolf เต็ม node)
+      ["members", "victims", "knowsCursed", "lastBodyguardTarget", "doubleKill", "sickNext"].forEach((key) => {
+        onValue(ref(db, `rooms/${roomCode}/wolf/${key}`), (snap) => {
+          room.wolf[key] = snap.val();
+          render();
+        });
+      });
+
+      // night กลางคืน: rules มี read ที่ night (host) -> ต่อตรงได้
+      onValue(ref(db, `rooms/${roomCode}/night`), (snap) => {
+        room.night = snap.val() || {};
+        render();
+      });
+
+      // lovers: อ่านสาธารณะ
+      onValue(ref(db, `rooms/${roomCode}/lovers`), (snap) => {
+        room.lovers = snap.val() || null;
+        render();
+      });
+
+      render();
+    };
+
+    // ข้อมูล host-only ที่ต้องอ่านแบบราย uid (roles / cursed)
+    // — เพราะ rules อนุญาตเฉพาะ secret/roles/$uid (host) ไม่ใช่ทั้งลิสต์
+    const boundHostUids = new Set();
+    const bindPlayersHostReads = () => {
+      const players = room.players || {};
+      for (const uid2 of Object.keys(players)) {
+        if (boundHostUids.has(uid2)) continue;
+        boundHostUids.add(uid2);
+        onValue(ref(db, `rooms/${roomCode}/secret/roles/${uid2}`), (snap) => {
+          const v = snap.val();
+          if (!room.secret.roles) room.secret.roles = {};
+          if (v) room.secret.roles[uid2] = v;
+          render();
+        });
+        onValue(ref(db, `rooms/${roomCode}/secret/cursed/${uid2}`), (snap) => {
+          const v = snap.val();
+          if (!room.secret.cursed) room.secret.cursed = {};
+          if (v) room.secret.cursed[uid2] = v;
+          render();
+        });
+        onValue(ref(db, `rooms/${roomCode}/wolf/votes/${uid2}`), (snap) => {
+          const v = snap.val();
+          if (!room.wolf.votes) room.wolf.votes = {};
+          if (v) room.wolf.votes[uid2] = v;
+          render();
+        });
+      }
+    };
+
+    onValue(ref(db, `rooms/${roomCode}/meta`), (snap) => {
+      room.meta = snap.val();
+      if (isHost()) bindHostSensitive();
+      render();
+    });
+    onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
+      room.players = snap.val() || {};
+      if (isHost()) bindHostSensitive();
+      if (isHost()) bindPlayersHostReads();
       render();
     });
   });

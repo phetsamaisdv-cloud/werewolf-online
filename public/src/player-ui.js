@@ -392,9 +392,22 @@ async function init() {
     myUid = user.uid;
     console.log("uid:", myUid);
 
-    // ฟังทั้งห้อง
-    onValue(ref(db, `rooms/${roomCode}`), (snap) => {
-      room = snap.val();
+    // อ่านแบบแยก node (Security Rules: ห้าม read ทั้งห้อง — ไม่งั้น secret รั่ว)
+    room = { meta: null, players: {} };
+    onValue(ref(db, `rooms/${roomCode}/meta`), (snap) => {
+      room.meta = snap.val();
+      render();
+    });
+    onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
+      room.players = snap.val() || {};
+      render();
+    });
+    onValue(ref(db, `rooms/${roomCode}/hunter`), (snap) => {
+      room.hunter = snap.val() || null;
+      render();
+    });
+    onValue(ref(db, `rooms/${roomCode}/lovers`), (snap) => {
+      room.lovers = snap.val() || null;
       render();
     });
 

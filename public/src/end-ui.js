@@ -14,9 +14,10 @@ import { ref, onValue, update } from "firebase/database";
 // ตัวแปรสถานะ
 let roomCode = null;
 let myUid = null;
-let room = null;          // สแนปช็อต /rooms/{code}
+let room = null;          // สแนปช็อตที่ประกอบจาก meta + players
 let myRole = null;        // บทบาทของตัวเอง
-const roles = {};         // บทบาทที่อ่านได้ (ของตัวเอง หรือทุกคนถ้า host)
+let roleRevealBound = false; // กัน binding ซ้ำตอนเฟส end
+const roles = {};         // บทบาทที่อ่านได้ (ของตัวเอง หรือทั้งหมดช่วง end)
 
 const $id = (n) => document.getElementById(n);
 
@@ -194,28 +195,36 @@ async function init() {
     if (!user) return;
     myUid = user.uid;
 
-    onValue(ref(db, `rooms/${roomCode}`), (snap) => {
-      room = snap.val();
+    // อ่านแบบแยก node (Security Rules: ห้าม read ทั้งห้อง — ไม่งั้น secret รั่ว)
+    room = { meta: null, players: {} };
+    onValue(ref(db, `rooms/${roomCode}/meta`), (snap) => {
+      room.meta = snap.val();
       render();
 
-      // บทบาทตัวเอง (ทุกคนอ่านของตัวเองได้ ตามข้อ 9)
-      const selfRole = ref(db, `rooms/${roomCode}/secret/roles/${myUid}`);
-      onValue(selfRole, (r) => {
-        const v = r.val();
-        if (v && v.role) roles[myUid] = v.role;
-        renderRoles();
-      });
-
-      // host → อ่านบทบาททุกคนเพื่อเฉลย (Security rules อนุญาตเฉพาะ host)
-      if (isHost()) {
-        for (const p of Object.values(room.players)) {
-          onValue(ref(db, `rooms/${roomCode}/secret/roles/${p.uid}`), (r) => {
+      // ที่เฟส end ทุกคนอ่านบทบาททุกคนได้ (Security Rules: read secret/roles/$uid ช่วง end)
+      if (room.meta && room.meta.phase === "end" && !roleRevealBound) {
+        roleRevealBound = true;
+        for (const uid2 of Object.keys(room.players || {})) {
+          if (uid2 === myUid) continue;
+          onValue(ref(db, `rooms/${roomCode}/secret/roles/${uid2}`), (r) => {
             const v = r.val();
-            if (v && v.role) roles[p.uid] = v.role;
+            if (v && v.role) roles[uid2] = v.role;
             renderRoles();
           });
         }
       }
+    });
+    onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
+      room.players = snap.val() || {};
+      render();
+    });
+
+    // บทบาทตัวเอง (ทุกคนอ่านของตัวเองได้ ตามข้อ 9)
+    const selfRole = ref(db, `rooms/${roomCode}/secret/roles/${myUid}`);
+    onValue(selfRole, (r) => {
+      const v = r.val();
+      if (v && v.role) roles[myUid] = v.role;
+      renderRoles();
     });
   });
 }

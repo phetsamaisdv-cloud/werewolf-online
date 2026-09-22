@@ -24,7 +24,7 @@ function getQueryParam(name) {
 async function newUniqueCode() {
   for (let tries = 0; tries < 30; tries++) {
     const code = genRoomCode();
-    const snap = await get(ref(db, `rooms/${code}`));
+    const snap = await get(ref(db, `rooms/${code}/meta`));
     if (!snap.exists()) return code;
   }
   throw new Error("ไม่สามารถสร้างรหัสห้องได้ ลองใหม่");
@@ -78,17 +78,18 @@ async function joinRoom(code) {
   }
 
   try {
-    const roomSnap = await get(ref(db, `rooms/${roomCode}`));
-    const room = roomSnap.val();
-    if (!room || !room.meta) {
+    const roomSnap = await get(ref(db, `rooms/${roomCode}/meta`));
+    const playersSnap = await get(ref(db, `rooms/${roomCode}/players`));
+    const meta = roomSnap.val();
+    if (!meta) {
       $id("msg").textContent = "ไม่พบห้องนี้ ตรวจรหัสอีกที";
       return;
     }
-    if (room.meta.phase !== "lobby") {
+    if (meta.phase !== "lobby") {
       $id("msg").textContent = "เกมในห้องนี้เริ่มไปแล้ว ให้คนทรงเชิญหรือรอเกมใหม่";
       return;
     }
-    const count = room.players ? Object.keys(room.players).length : 0;
+    const count = playersSnap.val() ? Object.keys(playersSnap.val()).length : 0;
     if (count >= ROOM_MAX_PLAYERS) {
       $id("msg").textContent = `ห้องเต็มแล้ว (สูงสุด ${ROOM_MAX_PLAYERS} คน)`;
       return;
