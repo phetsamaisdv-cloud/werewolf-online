@@ -1,0 +1,4 @@
+# Netlify: publish เว็บจากโฟลเดอร์ public/
+# (ส่วนอื่นของ repo เป็นแค่ตัวโปรเจค + Firebase rules ไม่ออกอากาศ)
+[build]
+  publish = "public"
