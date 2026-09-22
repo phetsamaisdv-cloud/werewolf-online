@@ -5,23 +5,22 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref } from "firebase/database";
 
-// 🔧 TODO: แทนที่ค่าด้วย config ของโปรเจค Firebase จริงของคุณ
-// วิธีหา: Firebase Console → ⚙️ Project settings → General → Your apps
-//          → Web app (ว่าง ๆ ไม่ได้ config)? ให้กด `</>` เพิ่มแอปเว็บก่อน
+// Config จริงของโปรเจค "werewolf-online23"
+// (จาก Firebase Console → Project settings → Your apps → Web app)
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCAkC4zq9ntCkq370R2hsMlrxnUkE0546A", // คีย์สาธารณะใช้ในหน้าเว็บได้ (อย่าเผลอไปใส่ใน workaround แทน)
+  authDomain: "werewolf-online23.firebaseapp.com",
+  databaseURL: "https://werewolf-online23-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "werewolf-online23",
+  storageBucket: "werewolf-online23.firebasestorage.app",
+  messagingSenderId: "180903285789",
+  appId: "1:180903285789:web:2350426ae24fe811ef62f4"
 };
 
 // initializeApp: เริ่มต้น Firebase App ครั้งเดียว แล้ว export ไปใช้ทั้งโปรเจค
 export const app = initializeApp(firebaseConfig);
 
-// getDatabase: ดึง instance ของ Realtime Database มาใช้ (ตรงนี้คือ realtime db)
+// getDatabase: ดึง instance ของ Realtime Database มาใช้
 export const db = getDatabase(app);
 
 // ============================================================

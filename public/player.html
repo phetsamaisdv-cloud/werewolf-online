@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werewolf Online — เกม</title>
   <link rel="stylesheet" href="src/style.css">
+  <!-- importmap: เปลี่ยน bare import "firebase/*" ให้ชี้ไป CDN gstatic (SDK v12.19.0 ตรงกับ npm install)
+       ทำให้ ES modules รันตรง ๆ ในเบราว์เซอร์โดยไม่ต้องใช้ bundler -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js"
+    }
+  }
+  </script>
 </head>
 <body>
   <!-- แถบบน: รหัสห้อง / วันที่ / เฟสปัจจุบัน -->

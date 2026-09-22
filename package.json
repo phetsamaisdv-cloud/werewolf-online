@@ -13,5 +13,8 @@
     "firebase",
     "realtime-database"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^12.19.0"
+  }
 }
