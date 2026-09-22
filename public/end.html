@@ -4,7 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werewolf Online — จบเกม</title>
+  <link rel="stylesheet" href="src/style.css">
+  <!-- importmap: ชี้ firebase/* ไป CDN gstatic (v12.19.0) → ES modules รันตรง ๆ -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js"
+    }
+  }
+  </script>
 </head>
 <body>
+  <header class="topbar">
+    <span id="room-code" class="code">----</span>
+    <span id="day-label">จบเกม</span>
+    <span id="phase-label">end</span>
+  </header>
+
+  <main>
+    <!-- แสดงผู้ชนะ (อ้างอิงแผน 5.2) -->
+    <section id="screen-end" class="screen">
+      <h1 id="end-title">เกมจบ</h1>
+      <p id="end-reason" class="hint"></p>
+    </section>
+
+    <!-- เฉลยบทบาท (ข้อ 5.3 / 6): host เห็น role ทุกคน ผู้เล่นเห็นเฉพาะของตัวเอง -->
+    <section id="screen-reveal" class="screen hidden">
+      <h2>เฉลยบทบาท</h2>
+      <p id="reveal-owner" class="hint"></p>
+      <ul id="role-list" class="player-list"></ul>
+    </section>
+
+    <!-- ปุ่มรีแมตช์ (3.7) + กลับหน้าแรก -->
+    <section id="screen-actions" class="screen">
+      <button id="btn-rematch" class="btn gold hidden">เล่นอีกครั้ง (กลุ่มเดิม)</button>
+      <a id="btn-spectate" class="btn hidden" href="#">ดูเป็นผู้ชม (Spectator)</a>
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/end-ui.js"></script>
 </body>
 </html>

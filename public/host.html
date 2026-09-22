@@ -3,8 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Werewolf Online — คนทรง</title>
+  <title>Werewolf Online — คนทรง / ผู้ชม</title>
+  <link rel="stylesheet" href="src/style.css">
+  <!-- importmap: ชี้ firebase/* ไป CDN gstatic (v12.19.0) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js"
+    }
+  }
+  </script>
 </head>
 <body>
+  <header class="topbar">
+    <span id="room-code" class="code">----</span>
+    <span id="day-label">วัน 0</span>
+    <span id="phase-label">…</span>
+  </header>
+
+  <main>
+    <!-- โหมดผู้ชม: อ่านอย่างเดียว ใช้หน้าของคนทรง (ข้อ 6)
+         คนทรงเต็มรูปแบบ (call role / ยิง / transfer) จะมาใน Day 6-7 -->
+    <section id="screen-spectate" class="screen">
+      <p class="hint">
+        👁️ โหมดผู้ชม (อ่านอย่างเดียว) — ผู้เล่นที่ตายแล้วจะเห็นหน้าที่นี้
+      </p>
+      <h1 id="phase-banner">—</h1>
+      <ul id="player-list" class="player-list"></ul>
+      <div id="vote-info" class="vote-summary"></div>
+      <div id="winner-info" class="hint"></div>
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/host-ui.js"></script>
 </body>
 </html>
