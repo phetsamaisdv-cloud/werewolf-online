@@ -1,0 +1,17 @@
+{
+  "name": "werewolf-online",
+  "version": "0.1.0",
+  "description": "Werewolf Online v2.1 — เกม Social Deduction แบบ Realtime บน Firebase",
+  "type": "module",
+  "scripts": {
+    "serve": "firebase serve",
+    "deploy": "firebase deploy"
+  },
+  "keywords": [
+    "werewolf",
+    "social-deduction",
+    "firebase",
+    "realtime-database"
+  ],
+  "license": "MIT"
+}

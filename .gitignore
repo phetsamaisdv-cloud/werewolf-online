@@ -1,0 +1,28 @@
+# ===== Node.js =====
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# ===== Firebase =====
+.firebase/
+firebase-debug.log
+database-debug.log
+*.local
+
+# ===== ไฟล์ env (ห้าม commit คีย์ลับ) =====
+.env
+.env.*
+!.env.example
+
+# ===== ไฟล์ระบบปฏิบัติการ / IDE =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== การ build / dist =====
+dist/
+build/
+out/
