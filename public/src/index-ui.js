@@ -57,6 +57,7 @@ async function createRoom() {
     };
 
     await set(ref(db, `rooms/${code}`), payload);
+    localStorage.setItem("werewolf_last_uid", uid);
     setName(name);
     window.location.href = `lobby.html?room=${code}`;
   } catch (e) {
@@ -104,6 +105,7 @@ async function joinRoom(code) {
       joinedAt: Date.now(),
       mayorRevealed: false
     });
+    localStorage.setItem("werewolf_last_uid", uid);
     setName(name);
     window.location.href = `lobby.html?room=${roomCode}`;
   } catch (e) {

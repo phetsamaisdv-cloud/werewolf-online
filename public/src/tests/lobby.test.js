@@ -8,6 +8,7 @@ import {
   assignRolesToPlayers,
   buildRoleDeck,
   genRoomCode,
+  normalizePlayers,
   shuffle
 } from "../room-utils.js";
 import { defaultSettings } from "../settings-store.js";
@@ -106,6 +107,23 @@ topic("room-utils.js — shuffle / assignRolesToPlayers");
   const assigned = assignRolesToPlayers(players, ["seer", "werewolf"]);
   check("u1 ได้บทบาทแรก (seer)", assigned.u1 && assigned.u1.role === "seer" && assigned.u1.team === "village");
   check("u2 ได้บทบาทที่สอง (werewolf)", assigned.u2 && assigned.u2.role === "werewolf");
+}
+
+// ============================================================
+topic("room-utils.js — normalizePlayers (อ่าน /players ให้ p.uid ใช้ได้)");
+{
+  // DB เก็บ players เป็น { key=uid: { name, alive, ... } } โดยไม่มี field uid ใน value
+  // UI ต้อง normalize ให้ object ทุกตัวมี uid จาก key ไม่งั้น core (p.uid) พังทั้งเกม
+  const raw = {
+    userA: { name: "A", alive: true, joinedAt: 1 },
+    userB: { name: "B", alive: false, joinedAt: 2 }
+  };
+  const arr = normalizePlayers(raw);
+  check("array มี 2 คน", arr.length === 2);
+  check("uid ถูกเติมจาก key (userA)", arr.find((p) => p.uid === "userA") !== undefined);
+  check("uid ถูกเติมจาก key (userB)", arr.find((p) => p.uid === "userB") !== undefined);
+  check("ข้อมูลเดิมยังครบ (name/alive)", arr.find((p) => p.uid === "userA").name === "A" && arr.find((p) => p.uid === "userB").alive === false);
+  check("input ว่าง → []", Array.isArray(normalizePlayers(null)) && normalizePlayers(null).length === 0);
 }
 
 // ============================================================

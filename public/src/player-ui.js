@@ -11,6 +11,7 @@ import { db } from "./firebase.js";
 import { ref, onValue, set, update } from "firebase/database";
 import { applyVoteResult, resolveVote } from "./vote.js";
 import { applyHunterShot, hunterDie } from "./hunter.js";
+import { normalizePlayers } from "./room-utils.js";
 
 // ตัวแปรสถานะกลาง (global ภายในไฟล์นี้)
 let roomCode = null;            // รหัสห้องจาก URL ?room=XXXX
@@ -399,7 +400,10 @@ async function init() {
       render();
     });
     onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
-      room.players = snap.val() || {};
+      // normalize: key ของ /players/{uid} คือ identity → ใส่ uid จาก key ให้ object ด้วย
+      room.players = Object.fromEntries(
+        normalizePlayers(snap.val() || {}).map((p) => [p.uid, p])
+      );
       render();
     });
     onValue(ref(db, `rooms/${roomCode}/hunter`), (snap) => {

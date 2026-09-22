@@ -17,6 +17,7 @@ import { getNightOrder, markCursedTurned, hostTransfer, hostTakeOver } from "./h
 import { resolveVote, applyVoteResult } from "./vote.js";
 import { hunterDie } from "./hunter.js";
 import { checkWin } from "./win-check.js";
+import { normalizePlayers } from "./room-utils.js";
 
 let roomCode = null;
 let room = null;
@@ -567,7 +568,10 @@ function init() {
       render();
     });
     onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
-      room.players = snap.val() || {};
+      // normalize: key ของ /players/{uid} คือ identity → ใส่ uid จาก key ให้ object ด้วย
+      room.players = Object.fromEntries(
+        normalizePlayers(snap.val() || {}).map((p) => [p.uid, p])
+      );
       if (isHost()) bindHostSensitive();
       if (isHost()) bindPlayersHostReads();
       render();

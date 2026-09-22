@@ -6,7 +6,7 @@
 import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { db } from "./firebase.js";
 import { ref, onValue, update, set } from "firebase/database";
-import { assignRolesToPlayers, buildRoleDeck } from "./room-utils.js";
+import { assignRolesToPlayers, buildRoleDeck, normalizePlayers } from "./room-utils.js";
 import {
   ROOM_MAX_PLAYERS,
   loadDraft,
@@ -20,6 +20,9 @@ let roomCode = null;
 let myUid = null;
 let room = null;
 let redirecting = false;
+let metaLoaded = false;    // meta โหลดครบหรือยัง
+let playersLoaded = false; // players โหลดครบหรือยัง (กัน race → เด้งกะทันหัน)
+let healingSelf = false;   // กัน insert ซ้ำ
 
 function getQueryParam(name) {
   return new URLSearchParams(window.location.search).get(name);
@@ -32,10 +35,46 @@ function isHost() {
 
 // ------------------------------------------------------------
 // playersSorted() — ผู้เล่นในล็อบบี้ (เรียงตาม joinedAt)
+// key ของ /players/{uid} คือ identity ของผู้เล่น → ใส่ uid จาก key ด้วย
+// ไม่งั้น core ของเกม (p.uid) ทำงานผิดทั้งเกม
 // ------------------------------------------------------------
 function playersSorted() {
   if (!room || !room.players) return [];
-  return Object.values(room.players).sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+  return normalizePlayers(room.players)
+    .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+}
+
+// ------------------------------------------------------------
+// healSelf() — ถ้าเรายังไม่ขึ้นในรายชื่อ (เช่น identity เปลี่ยน / เขียนไม่ทัน)
+//   ให้เขียนตัวเองเข้ารายชื่อ (rules อนุญาต self-write) แทนการเด้งออก
+// ------------------------------------------------------------
+async function healSelf() {
+  if (!myUid || healingSelf || !room || !room.meta) return;
+  // ถ้าเราเป็นคนสร้างห้องแต่ uid เปลี่ยน (incognito/หมดอายุ session) — บอกให้เข้าใหม่
+  const lastUid = localStorage.getItem("werewolf_last_uid");
+  if (lastUid && lastUid === room.meta.hostUid && lastUid !== myUid) {
+    showHealMsg("เซสชันระบุตัวตนเปลี่ยน (เช่น โหมดไม่ระบุตัวตน หรือบัญชีหมดอายุ) — กรุณากลับหน้าแรก แล้วสร้าง/เข้าห้องใหม่อีกรอบ");
+    return;
+  }
+  healingSelf = true;
+  try {
+    const profile = loadProfile();
+    await set(ref(db, `rooms/${roomCode}/players/${myUid}`), {
+      name: profile.name || "ผู้เล่น",
+      alive: true,
+      joinedAt: Date.now(),
+      mayorRevealed: false
+    });
+    console.log("healSelf: เพิ่มตัวเองเข้ารายชื่อแล้ว");
+  } catch (e) {
+    console.error("healSelf fail:", e);
+    setTimeout(() => { healingSelf = false; }, 1500);
+  }
+}
+
+function showHealMsg(msg) {
+  const el = $id("setup-warn");
+  if (el) el.textContent = "⚠️ " + msg;
 }
 
 // ------------------------------------------------------------
@@ -48,10 +87,18 @@ function render() {
   $id("big-code").textContent = roomCode;
   $id("phase-label").textContent = room.meta.phase === "lobby" ? "ล็อบบี้ 🛋️" : room.meta.phase;
 
+  // ยังไม่รู้ชุดข้อมูลครบ → รอ (กัน "เด้งออก" ก่อนที่ players จะมาทัน)
+  if (!playersLoaded) return;
+
   const players = playersSorted();
   const inRoom = players.find((p) => p.uid === myUid);
   if (!inRoom) {
-    // โดนไล่ออกจากห้องแล้ว / ห้องถูกลบ → กลับหน้าแรก
+    if (room.meta.phase === "lobby") {
+      // อยู่ในล็อบบี้: ใส่ตัวเองขึ้นรายชื่อเอาเอง (ไม่ต้องเด้งกลับหน้าแรก)
+      healSelf();
+      return;
+    }
+    // เกมเริ่มแล้วแต่เราไม่อยู่ในรายชื่อ → ถูกไล่ออกจากห้อง / ห้องเปลี่ยน → กลับหน้าแรก
     window.location.href = "./";
     return;
   }
@@ -211,10 +258,12 @@ function init() {
     room = { meta: null, players: {} };
     onValue(ref(db, `rooms/${roomCode}/meta`), (snap) => {
       room.meta = snap.val();
+      metaLoaded = true;
       render();
     });
     onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
       room.players = snap.val() || {};
+      playersLoaded = true;
       render();
     });
   });

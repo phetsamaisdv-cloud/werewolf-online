@@ -10,6 +10,7 @@
 import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { db } from "./firebase.js";
 import { ref, onValue, update } from "firebase/database";
+import { normalizePlayers } from "./room-utils.js";
 
 // ตัวแปรสถานะ
 let roomCode = null;
@@ -215,7 +216,10 @@ async function init() {
       }
     });
     onValue(ref(db, `rooms/${roomCode}/players`), (snap) => {
-      room.players = snap.val() || {};
+      // normalize: key ของ /players/{uid} คือ identity → ใส่ uid จาก key ให้ object ด้วย
+      room.players = Object.fromEntries(
+        normalizePlayers(snap.val() || {}).map((p) => [p.uid, p])
+      );
       render();
     });
 

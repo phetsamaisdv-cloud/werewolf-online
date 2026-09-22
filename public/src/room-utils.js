@@ -91,6 +91,14 @@ export function buildRoleDeck(playerCount, settings) {
 }
 
 // ------------------------------------------------------------
+// normalizePlayers(keyedMap) — /players/{uid} เก็บ key เป็น identity (ไม่มี uid ใน value)
+//   แปลงเป็น array [{ uid, ...playerData }] ให้ core ของเกม (p.uid) ใช้ได้ทุกจุด
+// ------------------------------------------------------------
+export function normalizePlayers(keyedMap) {
+  return Object.entries(keyedMap || {}).map(([uid, p]) => ({ ...p, uid }));
+}
+
+// ------------------------------------------------------------
 // assignRolesToPlayers(players, deck)
 // ผูกบทบาทให้กับผู้เล่นตามลำดับ (เรียง joinedAt) — ตัด deck ตามจำนวน
 // คืนค่า: { [uid]: { role, team } }
