@@ -24,8 +24,7 @@
   </header>
 
   <main>
-    <!-- โหมดผู้ชม: อ่านอย่างเดียว ใช้หน้าของคนทรง (ข้อ 6)
-         คนทรงเต็มรูปแบบ (call role / ยิง / transfer) จะมาใน Day 6-7 -->
+    <!-- ============ โหมดผู้ชม (อ่านอย่างเดียว — ข้อ 6) ============ -->
     <section id="screen-spectate" class="screen">
       <p class="hint">
         👁️ โหมดผู้ชม (อ่านอย่างเดียว) — ผู้เล่นที่ตายแล้วจะเห็นหน้าที่นี้
@@ -34,6 +33,40 @@
       <ul id="player-list" class="player-list"></ul>
       <div id="vote-info" class="vote-summary"></div>
       <div id="winner-info" class="hint"></div>
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+
+    <!-- ============ แผงคนทรง (เรียก role / เปลี่ยนเฟส / Cursed / transfer ข้อ 3.1, 3.6, 4) ============ -->
+    <section id="screen-host" class="screen hidden">
+      <h1>🎛️ แผงคนทรง</h1>
+
+      <!-- ปุ่มควบคุมเฟส (โชว์/ซ่อนตาม meta.phase) -->
+      <div class="host-controls">
+        <button id="btn-start-night" class="btn gold">🌙 เริ่มเกม: กลางคืน</button>
+        <button id="btn-resolve-night" class="btn">☀️ เช้า: สรุปกลางคืน</button>
+        <button id="btn-start-vote" class="btn">🗳️ เปิดโหวต</button>
+        <button id="btn-resolve-vote" class="btn">✅ สรุปโหวต</button>
+        <button id="btn-next-night" class="btn">🌙 คืนถัดไป</button>
+      </div>
+
+      <pre id="host-log" class="host-log"></pre>
+
+      <!-- ขั้นตอนกลางคืน (เรียกทีละบทบาท ข้อ 3.1) -->
+      <h2>ลำดับกลางคืน (Night 03 — 3.1)</h2>
+      <ul id="night-steps" class="night-steps"></ul>
+
+      <!-- โหวตหมาป่าไลฟ์ (ข้อ 3.2) -->
+      <h2>โหวตหมาป่า 🐺</h2>
+      <ul id="wolf-vote-list" class="player-list"></ul>
+
+      <!-- สถานะผู้ต้องสาป (ข้อ 4) -->
+      <h2>ผู้ต้องสาป 🐺➡️</h2>
+      <div id="cursed-panel"></div>
+
+      <!-- สลับคนทรง (ข้อ 3.6) -->
+      <h2>สลับคนทรง 🔑</h2>
+      <div id="transfer-panel" class="row"></div>
+
       <a class="btn" href="./">กลับหน้าแรก</a>
     </section>
   </main>
