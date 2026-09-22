@@ -103,6 +103,13 @@ export function submitNightAction(state, uid, type, target) {
   }
 
   if (type === ACTIONS.WITCH_HEAL || type === ACTIONS.WITCH_POISON) {
+    // ยาแต่ละชนิดใช้ได้ครั้งเดียวทั้งเกม (ข้อ 4)
+    if (type === ACTIONS.WITCH_HEAL && state.witchSaveUsed) {
+      return { ok: false, reason: "ยารักษาใช้ไปแล้ว (ใช้ได้ครั้งเดียวทั้งเกม)" };
+    }
+    if (type === ACTIONS.WITCH_POISON && state.witchPoisonUsed) {
+      return { ok: false, reason: "ยาพิษใช้ไปแล้ว (ใช้ได้ครั้งเดียวทั้งเกม)" };
+    }
     // "ห้ามใช้พร้อมกัน" — ถ้ามีอีก action หนึ่งถูกส่งมาแล้ว → ปฏิเสธ
     const witchActions = (state.pendingActions || []).filter(
       (a) => (a.type === ACTIONS.WITCH_HEAL || a.type === ACTIONS.WITCH_POISON) && a.uid === uid
@@ -214,7 +221,9 @@ export function resolveNight(roomState) {
     cursedStatuses = {},
     prevBodyguardTarget = null,
     wolfDoubleKill = false,
-    wolfSickPrev = false
+    wolfSickPrev = false,
+    witchSaveUsed = false,
+    witchPoisonUsed = false
   } = roomState;
 
   // สำเนาผู้เล่น (ไม่แก้ input)
@@ -284,7 +293,7 @@ export function resolveNight(roomState) {
     }
   }
 
-  // ============ 4) แม่มด: ห้ามใช้ 2 อย่างพร้อมกัน (ข้อ 4) ============
+  // ============ 4) แม่มด: ยาใช้ครั้งเดียวทั้งเกม + ห้ามใช้ 2 อย่างพร้อมกัน (ข้อ 4) ============
   let witchHealAction = null;
   let witchPoisonAction = null;
   for (const p of next) {
@@ -294,12 +303,23 @@ export function resolveNight(roomState) {
     if (a.type === ACTIONS.WITCH_HEAL) witchHealAction = a;
     if (a.type === ACTIONS.WITCH_POISON) witchPoisonAction = a;
   }
+  // ส่งซ้ำทั้งที่ใช้ไปแล้วก่อนหน้า (หมดสิทธิ์) → ไม่เกิดผล
+  if (witchHealAction && witchSaveUsed) {
+    witchHealAction = null;
+    warnings.push("แม่มดส่งยารักษา แต่ใช้ไปแล้วก่อนหน้า → ไม่เกิดผล (ข้อ 4)");
+  }
+  if (witchPoisonAction && witchPoisonUsed) {
+    witchPoisonAction = null;
+    warnings.push("แม่มดส่งยาพิษ แต่ใช้ไปแล้วก่อนหน้า → ไม่เกิดผล (ข้อ 4)");
+  }
   if (witchHealAction && witchPoisonAction) {
     // ใช้พร้อมกัน → ทั้ง 2 ถูกขัดขวาง (ห้ามตามข้อ 4)
     witchHealAction = null;
     witchPoisonAction = null;
     warnings.push("แม่มดใช้ยาพร้อมกันทั้ง 2 อย่าง → ทั้งคู่ไม่เกิดผล (กติกาข้อ 4)");
   }
+  const witchHealApplied = !!witchHealAction;
+  const witchPoisonApplied = !!witchPoisonAction;
 
   // ============ 5) ใช้ยาพิษ (ฆ่าตรง, ผ่านทุกการกัน) ============
   if (witchPoisonAction) {
@@ -403,6 +423,10 @@ export function resolveNight(roomState) {
     hunterTriggers,
     nextBodyguardTarget: bgTarget, // จำเป้าบอดี้การ์ดคืนนี้ → ห้ามซ้ำคืนถัดไป (ข้อ 4)
     wolf: { doubleKill: cubDied, knowsCursed, sickNext: wolfSickNext },
+    witch: {
+      saveUsed: witchSaveUsed || witchHealApplied,
+      poisonUsed: witchPoisonUsed || witchPoisonApplied
+    },
     warnings
   };
 }

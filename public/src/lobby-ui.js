@@ -203,6 +203,8 @@ async function startGame(players, settings) {
   updates["meta/phase"] = "night";
   updates["meta/day"] = 1;
   updates["meta/winner"] = null;
+  updates["meta/settings"] = settings; // เก็บไว้ที่ meta (rules อนุญาต host) — ใช้ตอนเรนเดอร์/เช็กผล
+  updates["meta/hostCall"] = null;
 
   try {
     await update(ref(db, `rooms/${roomCode}`), updates);

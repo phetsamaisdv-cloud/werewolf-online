@@ -26,6 +26,18 @@
   </header>
 
   <main>
+    <!-- ===== บัตรบทบาทตัวเอง (เห็นตลอด — ไม่งั้นลืมว่าตัวเองเป็นอะไร) ===== -->
+    <section id="role-card" class="screen hidden">
+      <div class="role-card-inner">
+        <img id="role-icon" class="role-icon" src="" alt="">
+        <div class="role-card-body">
+          <span id="role-team" class="role-team">…</span>
+          <h1 id="role-name">…</h1>
+          <p id="role-desc" class="hint"></p>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== เฟสกลางวัน: ถกเถียง + จับเวลา (แผนข้อ 6: หน้ากลางวัน) ===== -->
     <section id="screen-day" class="screen hidden">
       <h1>กลางวัน ☀️</h1>
@@ -55,10 +67,15 @@
       <button id="btn-shoot" class="btn danger hidden">ยิง! 🎯</button>
     </section>
 
-    <!-- ===== เฟสกลางคืน: ยังไม่สร้างในงานนี้ (Day 6-7) ===== -->
+    <!-- ===== เฟสกลางคืน: เรียกทีละบทบาท (คนทรงกดเรียก ข้อ 3.1) ===== -->
     <section id="screen-night" class="screen hidden">
       <h1>กลางคืน 🌙</h1>
-      <p class="hint">หลับตา… ระบบกลางคืนจะมาในงานถัดไป</p>
+      <div id="night-timer" class="timer"></div>
+      <p id="night-status" class="night-status"></p>
+      <p id="night-status-alt" class="hint"></p>
+      <div id="night-form"></div>
+      <p id="night-done" class="night-done hidden">✅ ส่งแล้ว — ปิดตาได้ รอ host ประกาศผล</p>
+      <div id="mason-visible" class="hint"></div>
     </section>
 
     <!-- ===== เฟสจบเกม (หมา 5.2) ===== -->

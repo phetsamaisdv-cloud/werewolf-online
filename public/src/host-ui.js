@@ -18,6 +18,7 @@ import { resolveVote, applyVoteResult } from "./vote.js";
 import { hunterDie } from "./hunter.js";
 import { checkWin } from "./win-check.js";
 import { normalizePlayers } from "./room-utils.js";
+import { defaultSettings } from "./settings-store.js";
 
 let roomCode = null;
 let room = null;
@@ -78,6 +79,31 @@ function logHost(msg) {
 }
 
 // ------------------------------------------------------------
+// metaSettings() / timerEndAt(phase) — เวลาแต่ละเฟส (แผนข้อ 3.8)
+// settings ถูกเขียนไว้ที่ meta/settings ตอนเริ่มเกม (lobby startGame)
+// ------------------------------------------------------------
+function metaSettings() {
+  const s = room && room.meta && room.meta.settings;
+  return s && s.timers ? s : defaultSettings();
+}
+
+function timerEndAt(phase) {
+  const sec = Number((metaSettings().timers || {})[phase]);
+  return Number.isFinite(sec) && sec > 0 ? Date.now() + sec * 1000 : 0;
+}
+
+// ------------------------------------------------------------
+// clearNightInputs(updates) — ล้าง action/โหวตของคืนก่อน (ข้อ 8)
+// เขียนเป็นราย uid (rules อนุญาต host เขียน night/actions/$uid, wolf/votes/$uid)
+// ------------------------------------------------------------
+function clearNightInputs(updates) {
+  for (const uid of Object.keys(room.players || {})) {
+    updates[`night/actions/${uid}`] = null;
+    updates[`wolf/votes/${uid}`] = null;
+  }
+}
+
+// ------------------------------------------------------------
 // buildRoomState() — รวมข้อมูลห้องให้ resolveNight (ข้อ 8)
 // ------------------------------------------------------------
 function buildRoomState() {
@@ -101,7 +127,15 @@ function buildRoomState() {
 // เริ่มเกม / ล็อบบี้ → กลางคืน 1
 function startNight() {
   if (!isHost()) return;
-  update(ref(db, `rooms/${roomCode}/meta`), { phase: "night", day: 1, winner: null });
+  const updates = {
+    "meta/phase": "night",
+    "meta/day": 1,
+    "meta/winner": null,
+    "meta/hostCall": null,
+    "meta/timerNightEndAt": timerEndAt("night")
+  };
+  clearNightInputs(updates);
+  update(ref(db, `rooms/${roomCode}`), updates);
   logHost("เริ่มกลางคืน 1 🌙");
 }
 
@@ -117,15 +151,24 @@ function resolveNightHost() {
     if (p.revealed) updates[`players/${p.uid}/revealed`] = true;
   }
 
-  // คู่รัก (cupid คืนแรก) + สถานะ Cursed
+  // คู่รัก (cupid คืนแรก) + สถานะ Cursed (write ราย uid — rules อนุญาตเฉพาะ secret/cursed/$uid)
   if (out.lovers && out.lovers.length === 2) updates["lovers/pair"] = out.lovers;
-  updates["secret/cursed"] = out.cursedStatuses;
+  for (const [cuid, cst] of Object.entries(out.cursedStatuses || {})) {
+    updates[`secret/cursed/${cuid}`] = cst;
+  }
 
   // หมาป่า: ไม่ให้ทำซ้ำคืนถัดไป (doubleKill/sickNext/รู้จัก Cursed) + จำเป้าบอดี้การ์ด
   updates["wolf/doubleKill"] = out.wolf.doubleKill || false;
   updates["wolf/sickNext"] = out.wolf.sickNext || false;
   updates["wolf/knowsCursed"] = out.wolf.knowsCursed || false;
   updates["wolf/lastBodyguardTarget"] = out.nextBodyguardTarget || null;
+
+  // ล้าง action/โหวตคืนนี้ (เริ่มคืนใหม่จากศูนย์ — ข้อ 8) + แม่มดใช้ยาไปแล้ว?
+  clearNightInputs(updates);
+  updates["meta/hostCall"] = null;
+  updates["meta/timerDayEndAt"] = timerEndAt("day");
+  updates["meta/witchSaveUsed"] = out.witch.saveUsed === true;
+  updates["meta/witchPoisonUsed"] = out.witch.poisonUsed === true;
 
   // ผู้ชนะ?
   const winner = checkWin(out.players, out.lovers, out.cursedStatuses, null);
@@ -154,7 +197,7 @@ function resolveNightHost() {
 // เปิดโหวต (กลางวัน → โหวต)
 function startVote() {
   if (!isHost()) return;
-  update(ref(db, `rooms/${roomCode}/meta`), { phase: "vote" });
+  update(ref(db, `rooms/${roomCode}/meta`), { phase: "vote", timerVoteEndAt: timerEndAt("vote") });
   logHost("เปิดโหวต 🗳️");
 }
 
@@ -191,6 +234,8 @@ function finalizeVote() {
     logHost(`ชนะแล้ว: ${WINNER_TH[out.winner.winner]} 🏁`);
   } else {
     updates["meta/phase"] = "night";
+    updates["meta/hostCall"] = null;
+    updates["meta/timerNightEndAt"] = timerEndAt("night");
     logHost("เข้าสู่กลางคืน 🌙");
   }
 
@@ -204,7 +249,15 @@ function finalizeVote() {
 function nextNight() {
   if (!isHost()) return;
   const day = ((room.meta && room.meta.day) || 1) + 1;
-  update(ref(db, `rooms/${roomCode}/meta`), { phase: "night", day, winner: null });
+  const updates = {
+    "meta/phase": "night",
+    "meta/day": day,
+    "meta/winner": null,
+    "meta/hostCall": null,
+    "meta/timerNightEndAt": timerEndAt("night")
+  };
+  clearNightInputs(updates);
+  update(ref(db, `rooms/${roomCode}`), updates);
   logHost(`เข้าคืนที่ ${day} 🌙  — day+1 (ตาม flow ต่อเนื่อง)`);
 }
 
@@ -215,9 +268,11 @@ function renderNightSteps() {
   const ul = $id("night-steps");
   ul.innerHTML = "";
   const order = getNightOrder(alivePlayers().map((p) => ({ uid: p.uid, role: p.role, alive: p.alive })));
+  const current = (room.meta && room.meta.hostCall) || null;
 
   for (const s of order) {
     const li = document.createElement("li");
+    if (current === s.step) li.classList.add("selected");
     const label = document.createElement("span");
     label.textContent = s.labelTH;
     li.appendChild(label);
@@ -233,8 +288,32 @@ function renderNightSteps() {
       names.textContent = s.uids.map((u) => playerName(u)).join(", ");
       li.appendChild(names);
     }
+    // ปุ่มเรียกบทบาทนี้ (กลางคืน ข้อ 3.1) — เขียน meta.hostCall ให้หน้า player รู้ตา
+    const call = document.createElement("button");
+    call.className = "btn small night-call";
+    call.textContent = current === s.step ? "เรียกอยู่…" : `เรียก: ${s.labelTH}`;
+    call.disabled = current === s.step;
+    call.onclick = () => {
+      if (!isHost()) return;
+      update(ref(db, `rooms/${roomCode}/meta`), { hostCall: s.step });
+      logHost(`เรียก ${s.labelTH} 🔔`);
+    };
+    li.appendChild(call);
     ul.appendChild(li);
   }
+
+  // จบการเรียก / ยกเลิก hostCall (ปิดตาได้ทุกคน)
+  const endRow = document.createElement("li");
+  const endBtn = document.createElement("button");
+  endBtn.className = "btn";
+  endBtn.textContent = current ? "จบการเรียกนี้ (ปิดตา)" : "เคลียร์ hostCall (เป็น null)";
+  endBtn.onclick = () => {
+    if (!isHost()) return;
+    update(ref(db, `rooms/${roomCode}/meta`), { hostCall: null });
+    logHost("จบการเรียก — ปิดตาได้ทุกคน");
+  };
+  endRow.appendChild(endBtn);
+  ul.appendChild(endRow);
 }
 
 // ============================================================

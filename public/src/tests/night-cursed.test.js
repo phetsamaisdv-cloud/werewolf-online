@@ -277,6 +277,61 @@ topic("night.js — resolveNight: หมาป่ากัด/กัน/ไม�
   check("ยากันอย่างเดียว → v1 รอดจากหมาป่า", healOnly.deaths.length === 0 && healOnly.players.find((p) => p.uid === "v1").alive === true);
 }
 
+topic("night.js — แม่มด: ยาใช้ครั้งเดียวทั้งเกม (ข้อ 4)");
+{
+  // submitNightAction: ใช้ไปแล้ว → ปฏิเสธ
+  const healUsed = submitNightAction(
+    { players: [P("wz", "witch")], currentNight: 1, witchSaveUsed: true },
+    "wz",
+    ACTIONS.WITCH_HEAL,
+    "x"
+  );
+  check("ยารักษาใช้ไปแล้ว → ปฏิเสธ", healUsed.ok === false);
+
+  const poisonUsed = submitNightAction(
+    { players: [P("wz", "witch")], currentNight: 1, witchPoisonUsed: true },
+    "wz",
+    ACTIONS.WITCH_POISON,
+    "x"
+  );
+  check("ยาพิษใช้ไปแล้ว → ปฏิเสธ", poisonUsed.ok === false);
+
+  // resolveNight: ใช้พิษคืนนี้ → witch.poisonUsed=true ลงไปในผล
+  const firstNight = resolveNight(
+    nightState({
+      players: [P("w1", "werewolf"), P("v1", "villager"), P("wz", "witch")],
+      actions: { wz: { uid: "wz", type: ACTIONS.WITCH_POISON, target: "v1", used: true } }
+    })
+  );
+  check("ใช้พิษคืนแรก → witch.poisonUsed = true", firstNight.witch.poisonUsed === true);
+
+  // resolveNight: ส่งพิษซ้ำทั้งที่ใช้ไปแล้ว (หมดสิทธิ์) → ไม่เกิดผล + ยัง flag เดิม
+  const reused = resolveNight(
+    nightState({
+      players: [P("w1", "werewolf"), P("v1", "villager"), P("wz", "witch")],
+      actions: { wz: { uid: "wz", type: ACTIONS.WITCH_POISON, target: "v1", used: true } },
+      witchPoisonUsed: true
+    })
+  );
+  check(
+    "ใช้พิษซ้ำทั้งที่หมดสิทธิ์ → ไม่ฆ่าใคร (ขัดขวาง)",
+    reused.deaths.length === 0 && reused.witch.poisonUsed === true
+  );
+
+  // resolveNight: ใช้ยากันคืนนี้ → witch.saveUsed=true (และกันหมาป่าได้)
+  const healNight = resolveNight(
+    nightState({
+      players: [P("w1", "werewolf"), P("v1", "villager"), P("wz", "witch")],
+      wolfVotes: { w1: "v1" },
+      actions: { wz: { uid: "wz", type: ACTIONS.WITCH_HEAL, target: "v1", used: true } }
+    })
+  );
+  check(
+    "ใช้ยากันคืนนี้ → witch.saveUsed = true + v1 รอด",
+    healNight.witch.saveUsed === true && healNight.deaths.length === 0
+  );
+}
+
 topic("night.js — resolveNight: tie → ไม่มีใครตาย (ข้อ 3.3)");
 {
   const r = resolveNight(

@@ -453,3 +453,145 @@ details > ul {
   margin: 8px 0 14px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ============================================================
+   Night System — บัตรบทบาท + กลางคืน + โหวตหมาป่า (Day 13)
+   ============================================================ */
+
+/* ---------- บัตรบทบาทตัวเอง (เห็นตลอด) ---------- */
+#role-card {
+  border: 2px solid var(--accent);
+}
+
+.role-card-inner {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.role-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  background: #0b1220;
+  border: 2px solid #334155;
+  object-fit: contain;
+  flex: none;
+  padding: 4px;
+}
+
+.role-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+#role-card h1 {
+  font-size: 18px;
+  margin: 2px 0;
+}
+
+#role-card h1 em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#role-card .hint {
+  margin-bottom: 0;
+}
+
+.role-team {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #fff;
+}
+
+.role-team.team-village {
+  background: var(--accent);
+}
+.role-team.team-wolf {
+  background: var(--danger);
+}
+.role-team.team-neutral {
+  background: #ca8a04;
+  color: #1a1a1a;
+}
+
+/* ---------- night screen ---------- */
+.night-status {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.night-done {
+  margin-top: 10px;
+  color: #4ade80;
+  font-weight: 700;
+}
+
+#night-form .input,
+#night-form select.input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 2px solid #334155;
+  border-radius: 10px;
+  background: #0b1220;
+  color: var(--fg);
+  font-size: 16px;
+}
+
+#night-form .input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- host: ลำดับกลางคืน + ปุ่มเรียก ---------- */
+.night-steps {
+  list-style: none;
+  margin: 6px 0 12px;
+}
+
+.night-steps li {
+  background: #16213b;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+}
+
+.night-steps li .count {
+  margin-left: auto;
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.night-steps li.selected {
+  border-color: var(--gold);
+  background: #22304f;
+}
+
+.btn.small {
+  width: auto;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+  margin-left: auto;
+}
+
+.night-call:disabled {
+  background: #334155;
+  color: var(--muted);
+  cursor: not-allowed;
+}
