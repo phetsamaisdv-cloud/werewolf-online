@@ -11,6 +11,7 @@ import { ROLE, getFactionRoleIds, getTeam } from "./roles.js";
 import {
   defaultSettings,
   loadDraft,
+  recommendedWolfCount,
   saveDraft as persistDraft,
   validateSettings
 } from "./settings-store.js";
@@ -80,10 +81,24 @@ function renderPreview() {
 // ------------------------------------------------------------
 // bindControls() — ผูก input ทั้งหมดเข้ากับ state
 // ------------------------------------------------------------
+// ------------------------------------------------------------
+// renderWolfHint() — แนะนำจำนวนหมาป่าตาม Balance (แผนข้อ 14)
+// ------------------------------------------------------------
+function renderWolfHint() {
+  const el = $id("wolf-hint");
+  if (!el) return;
+  el.textContent =
+    `หลักเกณฑ์สมดุล (แผน 14): 5–9 คน → ${recommendedWolfCount(9)} ตัว · ` +
+    `10–16 คน → ${recommendedWolfCount(16)} ตัว · ` +
+    `เลือกไว้ตอนนี้: ${current.wolfCount} ตัว`;
+}
+
 function bindControls() {
   $id("set-wolf-count").value = String(current.wolfCount);
+  renderWolfHint();
   $id("set-wolf-count").addEventListener("change", (e) => {
     current.wolfCount = Number(e.target.value);
+    renderWolfHint();
     renderPreview();
   });
 

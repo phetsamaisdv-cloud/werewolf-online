@@ -11,7 +11,7 @@ import {
   normalizePlayers,
   shuffle
 } from "../room-utils.js";
-import { defaultSettings } from "../settings-store.js";
+import { defaultSettings, recommendedWolfCount } from "../settings-store.js";
 
 let passed = 0;
 let failed = 0;
@@ -124,6 +124,14 @@ topic("room-utils.js — normalizePlayers (อ่าน /players ให้ p.uid
   check("uid ถูกเติมจาก key (userB)", arr.find((p) => p.uid === "userB") !== undefined);
   check("ข้อมูลเดิมยังครบ (name/alive)", arr.find((p) => p.uid === "userA").name === "A" && arr.find((p) => p.uid === "userB").alive === false);
   check("input ว่าง → []", Array.isArray(normalizePlayers(null)) && normalizePlayers(null).length === 0);
+}
+
+// ============================================================
+topic("settings-store.js — recommendedWolfCount (Balance ข้อ 14)");
+{
+  check("5–9 คน → 2 ตัว", recommendedWolfCount(5) === 2 && recommendedWolfCount(9) === 2);
+  check("10–12 คน → 3 ตัว", recommendedWolfCount(10) === 3 && recommendedWolfCount(12) === 3);
+  check("13–16 คน → 3 ตัว (ช่วง 3–4 เลือกต่ำสุด)", recommendedWolfCount(13) === 3 && recommendedWolfCount(16) === 3);
 }
 
 // ============================================================

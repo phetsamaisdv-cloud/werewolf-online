@@ -31,16 +31,20 @@
         <button id="btn-copy" class="btn">🔗 คัดลอกลิงก์เชิญ</button>
       </div>
 
-      <!-- จำนวนผู้เล่น -->
-      <p class="hint" id="player-count">ผู้เล่น 0/16</p>
+      <!-- จำนวนผู้เล่น + สถานะล็อก -->
+      <p class="hint" id="player-count">ผู้เล่น 0/16 <span id="locked-badge" class="hidden">· 🔒 ห้องถูกล็อก</span></p>
       <ul id="player-list" class="player-list"></ul>
 
       <!-- สรุป settings (คนทรงดูตัวเกม) -->
       <div id="settings-summary" class="vote-summary"></div>
 
-      <!-- คนทรง: เริ่มเกม (ข้อ 7.2 validation) -->
+      <!-- คนทรง: เริ่มเกม (ข้อ 7.2 validation) + ล็อก/ไล่ออกจากห้อง -->
       <div id="host-panel" class="hidden">
         <p id="setup-warn" class="hint warn-on"></p>
+        <label class="toggle-box">
+          <input type="checkbox" id="lock-toggle">
+          <span><b>🔒 ล็อกห้อง</b> <small>กันคนที่ยังไม่ได้อยู่ในห้องเข้าระหว่างรอ/เล่น</small></span>
+        </label>
         <button id="btn-start" class="btn gold">🎲 เริ่มเกม — ใหญ่ๆ แจกบทบาท</button>
         <a id="back-settings" class="link" href="settings.html">⚙️ แก้การตั้งค่า (draft)</a>
       </div>

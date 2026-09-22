@@ -10,6 +10,7 @@ import { assignRolesToPlayers, buildRoleDeck, normalizePlayers } from "./room-ut
 import {
   ROOM_MAX_PLAYERS,
   loadDraft,
+  recommendedWolfCount,
   validateRoomSetup
 } from "./settings-store.js";
 import { loadProfile } from "./profile-store.js";
@@ -31,6 +32,17 @@ function getQueryParam(name) {
 function isHost() {
   const meta = room && room.meta;
   return !!meta && (meta.hostUid === myUid || meta.hostUid2 === myUid);
+}
+
+// ถูกคนทรงไล่ออกจากห้อง (meta/kicked/{uid}) — เขียนโดย host ตอนกดลบ
+function kickedMe() {
+  const meta = room && room.meta;
+  return !!meta && !!meta.kicked && meta.kicked[myUid] === true;
+}
+
+function isLocked() {
+  const meta = room && room.meta;
+  return !!meta && meta.locked === true;
 }
 
 // ------------------------------------------------------------
@@ -93,6 +105,16 @@ function render() {
   const players = playersSorted();
   const inRoom = players.find((p) => p.uid === myUid);
   if (!inRoom) {
+    // ถูกคนทรงไล่ออก → กลับหน้าแรก (ห้าม healSelf ซึ่งจะพาเข้ากลับเอง)
+    if (kickedMe()) {
+      window.location.href = "./?msg=kicked";
+      return;
+    }
+    // ห้องถูกล็อก + เราไม่อยู่ในรายชื่อ → อย่า healSelf ข้ามล็อกเด็ดขาด
+    if (isLocked()) {
+      window.location.href = "./?msg=locked";
+      return;
+    }
     if (room.meta.phase === "lobby") {
       // อยู่ในล็อบบี้: ใส่ตัวเองขึ้นรายชื่อเอาเอง (ไม่ต้องเด้งกลับหน้าแรก)
       healSelf();
@@ -104,10 +126,12 @@ function render() {
   }
 
   $id("player-count").textContent = `ผู้เล่น ${players.length}/${ROOM_MAX_PLAYERS}`;
+  $id("locked-badge").classList.toggle("hidden", !isLocked());
 
   // รายชื่อ
   const list = $id("player-list");
   list.innerHTML = "";
+  const host = isHost();
   for (const p of players) {
     const li = document.createElement("li");
     li.classList.add("selectable");
@@ -124,6 +148,29 @@ function render() {
       tag.className = "count";
       tag.textContent = "👑 คนทรง";
       li.appendChild(tag);
+    } else if (p.uid === room.meta.hostUid2) {
+      const tag = document.createElement("span");
+      tag.className = "count";
+      tag.textContent = "👑 รอง";
+      li.appendChild(tag);
+    }
+    // คนทรง: ไล่ออกจากห้อง (ลบ player + กาง flag kicked — กัน healSelf ลงใหม่)
+    if (host && p.uid !== myUid && p.uid !== room.meta.hostUid && p.uid !== room.meta.hostUid2) {
+      const kick = document.createElement("button");
+      kick.className = "btn small danger";
+      kick.textContent = "ลบ";
+      kick.addEventListener("click", async () => {
+        if (!window.confirm(`ไล่ ${name.textContent} ออกจากห้อง?`)) return;
+        try {
+          await update(ref(db, `rooms/${roomCode}`), {
+            [`players/${p.uid}`]: null,
+            [`meta/kicked/${p.uid}`]: true
+          });
+        } catch (e) {
+          console.error("kick fail:", e);
+        }
+      });
+      li.appendChild(kick);
     }
     list.appendChild(li);
   }
@@ -136,13 +183,15 @@ function render() {
   const summary = $id("settings-summary");
   const onCount = Object.values(settings.enabledRoles || {}).filter(Boolean).length;
   summary.textContent =
-    `🐺 หมาป่า ${settings.wolfCount} · 🎭 บทบาทที่เปิด ${onCount} · ` +
+    `🐺 หมาป่า ${settings.wolfCount} ตัว (แนะนำ ${recommendedWolfCount(players.length)}) · 🎭 บทบาทที่เปิด ${onCount} · ` +
     `⏱️ ${settings.timers.night}/${settings.timers.day}/${settings.timers.vote} วิ (ค่ำ/กลางวัน/โหวต) · ` +
     (settings.revealRoleOnDeath ? "เปิดบทบาทเมื่อตาย ✅" : "ไม่เปิดบทบาทเมื่อตาย ❌");
 
-  // คนทรงเท่านั้น: เริ่มเกม
-  $id("host-panel").classList.toggle("hidden", !isHost());
-  if (isHost()) {
+  // คนทรงเท่านั้น: เริ่มเกม + ล็อกห้อง
+  $id("host-panel").classList.toggle("hidden", !host);
+  if (host) {
+    const lockEl = $id("lock-toggle");
+    if (lockEl.checked !== isLocked()) lockEl.checked = isLocked();
     const setup = validateRoomSetup(players.length, settings);
     $id("setup-warn").textContent = setup.warns.length
       ? "⚠️ " + setup.warns.join(" · ")
@@ -239,6 +288,15 @@ function bind() {
     }
   });
   $id("btn-leave").addEventListener("click", leaveRoom);
+  const lockEl = $id("lock-toggle");
+  if (lockEl) {
+    lockEl.addEventListener("change", () => {
+      if (!isHost()) return;
+      update(ref(db, `rooms/${roomCode}/meta`), { locked: !!lockEl.checked }).catch((e) => {
+        console.error("lock fail:", e);
+      });
+    });
+  }
 }
 
 function init() {

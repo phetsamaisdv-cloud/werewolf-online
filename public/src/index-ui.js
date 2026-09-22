@@ -90,10 +90,21 @@ async function joinRoom(code) {
       $id("msg").textContent = "เกมในห้องนี้เริ่มไปแล้ว ให้คนทรงเชิญหรือรอเกมใหม่";
       return;
     }
+    if (meta.kicked && meta.kicked[uid] === true) {
+      $id("msg").textContent = "คุณถูกไล่ออกจากห้องนี้แล้ว ไม่สามารถเข้ากลับได้";
+      return;
+    }
     const count = playersSnap.val() ? Object.keys(playersSnap.val()).length : 0;
     if (count >= ROOM_MAX_PLAYERS) {
       $id("msg").textContent = `ห้องเต็มแล้ว (สูงสุด ${ROOM_MAX_PLAYERS} คน)`;
       return;
+    }
+    if (meta.locked === true) {
+      const alreadyIn = playersSnap.val() && playersSnap.val()[uid];
+      if (!alreadyIn) {
+        $id("msg").textContent = "คนทรงล็อกห้องอยู่ ยังเข้าไม่ได้ รอเจ้าของห้องปลดล็อก";
+        return;
+      }
     }
     if (count < ROOM_MIN_PLAYERS - 1) {
       // เตือนเบา ๆ ว่าอาจยังรอคนไม่ครบ ยังเข้าได้
@@ -153,6 +164,11 @@ function init() {
     if (!user) return;
     uid = user.uid;
     bind();
+
+    // ถูกไล่ออกจากห้อง / เจอห้องล็อก (ลิงก์เดียวกับ lobby redirect)
+    const msg = getQueryParam("msg");
+    if (msg === "kicked") $id("msg").textContent = "คุณถูกไล่ออกจากห้องแล้ว";
+    if (msg === "locked") $id("msg").textContent = "คนทรงล็อกห้องอยู่ — ขอให้เจ้าของห้องปลดล็อกก่อนเข้ากลับ";
 
     // ถ้าเปิดผ่านลิงก์ ?room=XXXX → เติมชื่อ (จากโปรไฟล์) แล้วโชว์
     const q = getQueryParam("room");
