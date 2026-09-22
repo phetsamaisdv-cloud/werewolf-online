@@ -398,3 +398,58 @@ details > ul {
   color: var(--muted);
   font-size: 13px;
 }
+
+/* ============================================================
+   Day 2-3 — Landing + Lobby
+   ============================================================ */
+
+/* ---------- landing ---------- */
+.logo {
+  text-align: center;
+  font-size: 26px;
+  color: var(--gold);
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 14px;
+}
+.link:hover {
+  text-decoration: underline;
+}
+
+.code-input {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px;
+  border: 2px solid #334155;
+  border-radius: 10px;
+  background: #0b1220;
+  color: var(--fg);
+  font-size: 18px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-align: center;
+}
+.code-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ---------- lobby ---------- */
+.invite-box {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed #334155;
+  margin-bottom: 12px;
+}
+
+.big-code {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: 10px;
+  color: var(--gold);
+  margin: 8px 0 14px;
+  font-variant-numeric: tabular-nums;
+}

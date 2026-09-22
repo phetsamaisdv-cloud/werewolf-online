@@ -4,7 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werewolf Online — หน้าแรก</title>
+  <link rel="stylesheet" href="src/style.css">
+  <!-- importmap: ชี้ firebase/* ไป CDN gstatic (v12.19.0) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js"
+    }
+  }
+  </script>
 </head>
 <body>
+  <main>
+    <section class="screen">
+      <h1 class="logo">🐺 Werewolf Online</h1>
+      <p class="hint">เกม Social Deduction กลุ่ม 5–16 คน ออนไลน์</p>
+
+      <!-- ชื่อ -->
+      <label class="field">
+        <span>ชื่อของคุณ</span>
+        <input type="text" id="name-input" maxlength="16" placeholder="พิมพ์ชื่อแล้วเริ่มได้เลย…">
+      </label>
+
+      <!-- สร้างห้อง -->
+      <button id="btn-create" class="btn gold">🛠️ สร้างห้อง (เป็นคนทรง)</button>
+
+      <!-- เข้าห้อง -->
+      <div class="row">
+        <input id="join-code" class="code-input" maxlength="4" placeholder="รหัส 4 ตัว"
+               autocomplete="off" autocapitalize="characters">
+        <button id="btn-join" class="btn">เข้าห้อง</button>
+      </div>
+
+      <p id="msg" class="hint"></p>
+      <a class="link" href="settings.html">⚙️ ตั้งค่าเกม</a> ·
+      <a class="link" href="help.html">📖 กติกา</a> ·
+      <a class="link" href="profile.html">👤 โปรไฟล์</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/index-ui.js"></script>
 </body>
 </html>
