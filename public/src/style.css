@@ -199,3 +199,202 @@ main h1 {
 #end-title.lose {
   color: var(--danger);
 }
+
+/* ============================================================
+   Day 12 — Settings / Help / Profile polish (mobile-first)
+   ============================================================ */
+
+/* ---------- แถวเรียง (ฟอร์ม 2-3 ช่อง) ---------- */
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* ---------- ฟอร์ม: label + input ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field.small {
+  flex: 1;
+  min-width: 80px;
+}
+
+.field input,
+.field select,
+.preview {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #334155;
+  border-radius: 10px;
+  background: #0b1220;
+  color: var(--fg);
+  font-size: 16px;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.field select {
+  appearance: auto;
+}
+
+/* ---------- toggle checkbox (เปิด/ปิด role) ---------- */
+.toggle-box {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  background: #16213b;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.toggle-box input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex: none;
+}
+
+.toggle-box span {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.toggle-box small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.toggle-box input:disabled + span {
+  opacity: 0.6;
+}
+
+/* ---------- กลุ่มบทบาท: line-teamed labels ---------- */
+.team-label {
+  margin: 14px 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+  padding-left: 8px;
+  border-left: 4px solid var(--muted);
+}
+
+.team-village {
+  border-color: var(--accent);
+  color: #93c5fd;
+}
+.team-wolf {
+  border-color: var(--danger);
+  color: #fca5a5;
+}
+.team-neutral {
+  border-color: var(--gold);
+  color: #fde68a;
+}
+
+/* ---------- คำเตือนตั้งค่า ---------- */
+.warn {
+  color: var(--danger);
+}
+.warn-on {
+  font-weight: 700;
+}
+
+.preview {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+
+h1, h2 {
+  margin-top: 16px;
+}
+h2 {
+  font-size: 16px;
+}
+
+/* ---------- help: step list / rules / details ---------- */
+.steps,
+.rules {
+  margin-left: 18px;
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.steps li,
+.rules li {
+  margin-bottom: 6px;
+}
+
+details {
+  background: #16213b;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+summary {
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  list-style: none;
+}
+summary::before {
+  content: "▸ ";
+  color: var(--accent);
+}
+details[open] summary::before {
+  content: "▾ ";
+}
+
+details .hint,
+details > p,
+details > ul {
+  padding: 0 14px 12px;
+}
+
+.role-card summary b {
+  margin-right: 6px;
+}
+
+/* ---------- profile: stat cards ---------- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stat-card {
+  background: #0b1220;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-num {
+  display: block;
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.stat-label {
+  color: var(--muted);
+  font-size: 13px;
+}

@@ -3,8 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Werewolf Online — ตั้งค่า</title>
+  <title>Werewolf Online — ตั้งค่าห้อง</title>
+  <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
+  <header class="topbar">
+    <span class="code">⚙️ ตั้งค่า</span>
+    <span class="phase">ก่อนเริ่มเกม</span>
+  </header>
+
+  <main>
+    <section class="screen">
+      <h1>ตั้งค่าห้อง</h1>
+      <p class="hint">
+        ตั้งก่อนสร้างห้อง (แผนข้อ 6 — Settings) คนทรงเป็นคนตั้ง แล้วระบบโหลดการตั้งค่านี้ตอนเริ่มเกม
+      </p>
+
+      <!-- จำนวนหมาป่า (แผนข้อ 2.1 / 3) -->
+      <label class="field">
+        <span>จำนวนหมาป่า 🐺</span>
+        <select id="set-wolf-count">
+          <option value="1">1</option>
+          <option value="2" selected>2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+
+      <!-- กติกาการตาย: เปิดบทบาทเมื่อตาย (ข้อ 3.4 / 8: settings.revealRoleOnDeath) -->
+      <label class="toggle-box">
+        <input type="checkbox" id="set-reveal" checked>
+        <span><b>เปิดเผยบทบาทเมื่อตาย</b><br><small>คนตายเปิด Role ให้ทุกคนเห็น (ยกเว้น Hunter ตามข้อ 3.4)</small></span>
+      </label>
+
+      <!-- เวลาแต่ละเฟส (ข้อ 3.8 / 8: settings.timers) -->
+      <h2>เวลาของแต่ละเฟส (วินาที)</h2>
+      <div class="row">
+        <label class="field small">
+          <span>กลางคืน 🌙</span>
+          <input type="number" id="set-timer-night" value="30" min="10" step="5">
+        </label>
+        <label class="field small">
+          <span>กลางวัน ☀️</span>
+          <input type="number" id="set-timer-day" value="45" min="10" step="5">
+        </label>
+        <label class="field small">
+          <span>โหวต 🗳️</span>
+          <input type="number" id="set-timer-vote" value="30" min="10" step="5">
+        </label>
+      </div>
+
+      <!-- เปิด/ปิดบทบาท (แผนข้อ 4 / 8) -->
+      <h2>เปิด/ปิดบทบาท</h2>
+      <div id="role-toggle-list"></div>
+      <p id="settings-warn" class="hint warn"></p>
+
+      <!-- ผลลัพธ์ + บันทึก -->
+      <h2>ผลลัพธ์ (preview)</h2>
+      <textarea id="settings-preview" class="preview" readonly rows="8"></textarea>
+      <button id="btn-save-draft" class="btn gold">💾 บันทึกการตั้งค่า</button>
+      <button id="btn-reset-default" class="btn danger">คืนค่าเริ่มต้น</button>
+      <p id="save-msg" class="hint"></p>
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/settings-ui.js"></script>
 </body>
 </html>

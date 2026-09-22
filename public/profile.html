@@ -4,7 +4,44 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werewolf Online — โปรไฟล์</title>
+  <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
+  <header class="topbar">
+    <span class="code">👤 โปรไฟล์</span>
+    <span class="phase">เก็บในเครื่อง (localStorage)</span>
+  </header>
+
+  <main>
+    <section class="screen">
+      <h1>โปรไฟล์ของฉัน</h1>
+
+      <!-- ชื่อ -->
+      <label class="field">
+        <span>ชื่อเล่น</span>
+        <input type="text" id="pf-name" maxlength="16" placeholder="พิมพ์ชื่อของคุณ…">
+      </label>
+      <button id="btn-save-name" class="btn">บันทึกชื่อ</button>
+
+      <!-- สถิติ (แผนข้อ 6) -->
+      <h2>สถิติ</h2>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <span class="stat-num" id="pf-played">0</span>
+          <span class="stat-label">เกมที่เล่น</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-num" id="pf-won">0</span>
+          <span class="stat-label">เกมที่ชนะ</span>
+        </div>
+      </div>
+      <button id="btn-reset" class="btn danger">รีเซ็ตสถิติ</button>
+      <p id="pf-msg" class="hint"></p>
+
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/profile-ui.js"></script>
 </body>
 </html>
