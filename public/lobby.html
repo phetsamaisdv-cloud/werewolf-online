@@ -4,7 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werewolf Online — ล็อบบี้</title>
+  <link rel="stylesheet" href="src/style.css">
+  <!-- importmap: ชี้ firebase/* ไป CDN gstatic (v12.19.0) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js"
+    }
+  }
+  </script>
 </head>
 <body>
+  <header class="topbar">
+    <span id="room-code" class="code">----</span>
+    <span id="phase-label" class="phase">ล็อบบี้ 🛋️</span>
+  </header>
+
+  <main>
+    <section class="screen">
+      <!-- รหัสห้อง + เชิญเพื่อน -->
+      <div class="invite-box">
+        <h1>รหัสห้อง</h1>
+        <div class="big-code" id="big-code">----</div>
+        <button id="btn-copy" class="btn">🔗 คัดลอกลิงก์เชิญ</button>
+      </div>
+
+      <!-- จำนวนผู้เล่น -->
+      <p class="hint" id="player-count">ผู้เล่น 0/16</p>
+      <ul id="player-list" class="player-list"></ul>
+
+      <!-- สรุป settings (คนทรงดูตัวเกม) -->
+      <div id="settings-summary" class="vote-summary"></div>
+
+      <!-- คนทรง: เริ่มเกม (ข้อ 7.2 validation) -->
+      <div id="host-panel" class="hidden">
+        <p id="setup-warn" class="hint warn-on"></p>
+        <button id="btn-start" class="btn gold">🎲 เริ่มเกม — ใหญ่ๆ แจกบทบาท</button>
+        <a id="back-settings" class="link" href="settings.html">⚙️ แก้การตั้งค่า (draft)</a>
+      </div>
+
+      <!-- แผงทุกคน -->
+      <button id="btn-leave" class="btn danger">ออกจากห้อง</button>
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/lobby-ui.js"></script>
 </body>
 </html>
