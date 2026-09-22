@@ -4,7 +4,60 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Werewolf Online — เกม</title>
+  <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
+  <!-- แถบบน: รหัสห้อง / วันที่ / เฟสปัจจุบัน -->
+  <header class="topbar">
+    <span id="room-code" class="code">----</span>
+    <span id="day-label">วัน 0</span>
+    <span id="phase-label">…</span>
+  </header>
+
+  <main>
+    <!-- ===== เฟสกลางวัน: ถกเถียง + จับเวลา (แผนข้อ 6: หน้ากลางวัน) ===== -->
+    <section id="screen-day" class="screen hidden">
+      <h1>กลางวัน ☀️</h1>
+      <p class="hint">ถกเถียงกันได้จนกว่านายก/คนทรงจะเปิดโหวต</p>
+      <div id="day-timer" class="timer"></div>
+      <div id="mayor-box"></div>
+      <button id="btn-start-vote" class="btn hidden">เริ่มโหวต</button>
+      <ul id="day-players" class="player-list"></ul>
+    </section>
+
+    <!-- ===== เฟสโหวต: เปิดเรียลไทม์ เปลี่ยนใจได้ (ข้อ 3.3) ===== -->
+    <section id="screen-vote" class="screen hidden">
+      <h1>โหวต 🗳️</h1>
+      <p class="hint">แตะชื่อคนที่โหวต เปลี่ยนใจได้จนหมดเวลา</p>
+      <div id="vote-timer" class="timer"></div>
+      <ul id="vote-players" class="player-list"></ul>
+      <div id="vote-summary" class="vote-summary"></div>
+      <button id="btn-clear-vote" class="btn hidden">ล้างการโหวตของฉัน</button>
+      <button id="btn-end-vote" class="btn gold hidden">สรุปโหวต (คนทรง)</button>
+    </section>
+
+    <!-- ===== เฟสนายพราน: เลือกเป้า + ยิง (ข้อ 4) ===== -->
+    <section id="screen-hunter" class="screen hidden">
+      <h1>นายพราน 🏹</h1>
+      <p id="hunter-msg" class="hint"></p>
+      <ul id="hunter-players" class="player-list"></ul>
+      <button id="btn-shoot" class="btn danger hidden">ยิง! 🎯</button>
+    </section>
+
+    <!-- ===== เฟสกลางคืน: ยังไม่สร้างในงานนี้ (Day 6-7) ===== -->
+    <section id="screen-night" class="screen hidden">
+      <h1>กลางคืน 🌙</h1>
+      <p class="hint">หลับตา… ระบบกลางคืนจะมาในงานถัดไป</p>
+    </section>
+
+    <!-- ===== เฟสจบเกม (หมา 5.2) ===== -->
+    <section id="screen-end" class="screen hidden">
+      <h1 id="end-title">เกมจบ</h1>
+      <p id="end-reason" class="hint"></p>
+      <a class="btn" href="./">กลับหน้าแรก</a>
+    </section>
+  </main>
+
+  <script type="module" src="src/player-ui.js"></script>
 </body>
 </html>

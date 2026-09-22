@@ -1,0 +1,201 @@
+/* ============================================================
+   style.css — Werewolf Online v2.1
+   Mobile-first + มินิมอล (แผนข้อ 10, ธีมมืดลึกลับข้อ 18)
+   ============================================================ */
+
+/* ---------- reset + ตัวแปรสี ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0f1729;          /* กรมท่าเข้ม ตามธีม 18 */
+  --card: #1e293b;
+  --fg: #eef2ff;          /* ข้อความหลัก */
+  --muted: #94a3b8;       /* ข้อความรอง */
+  --accent: #3b82f6;      /* ฟ้า ฝ่ายชาวบ้าน */
+  --danger: #b91c1c;      /* แดงเลือดหมู ฝ่ายหมาป่า */
+  --gold: #eab308;        /* ทอง */
+  --radius: 12px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------- แถบบน ---------- */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--card);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.topbar .code {
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.topbar .phase {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------- หน้าจอหลัก ---------- */
+main .screen {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+main h1 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.timer {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 8px 0 12px;
+}
+
+/* ---------- รายชื่อผู้เล่น ---------- */
+.player-list {
+  list-style: none;
+}
+
+.player-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #16213b;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+  /* ป้องกันการโดน copy ตอนแตะไว ๆ */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.player-list li .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex: none;
+}
+
+.player-list li.selectable:hover {
+  border-color: var(--accent);
+}
+
+.player-list li.selected {
+  border-color: var(--gold);
+  background: #22304f;
+}
+
+.player-list li .count {
+  margin-left: auto;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.player-list li.dead {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.player-list li.me {
+  order: -1;
+}
+
+/* ---------- ปุ่ม ---------- */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  background: #334155;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.btn.danger {
+  background: var(--danger);
+}
+
+.btn.gold {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+.btn + .btn {
+  margin-top: 8px;
+}
+
+/* ---------- สรุปโหวต / ผล ---------- */
+.vote-summary {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #0b1220;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- หน้า end ---------- */
+#end-title.win {
+  color: var(--gold);
+}
+#end-title.lose {
+  color: var(--danger);
+}
